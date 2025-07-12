@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TOOL AI ROBOT FanKy</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1a1a1d, #3a0ca3);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .card-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 30px 25px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .card input {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background: #222;
+      color: #fff;
+    }
+
+    .card input::placeholder {
+      color: #aaa;
+    }
+
+    .card button {
+      padding: 12px;
+      font-size: 16px;
+      background: #7209b7;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .card button:hover {
+      background: #560bad;
+    }
+
+    .msg {
+      font-size: 14px;
+      color: #ff4d4d;
+      text-align: center;
+    }
+
+    iframe {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      z-index: 0;
+      display: none;
+    }
+
+    .robot-container {
+      position: fixed;
+      top: 150px;
+      left: 100px;
+      width: 120px;
+      z-index: 9999;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .robot-img {
+      width: 100%;
+      pointer-events: none;
+    }
+
+    .speech-bubble {
+      position: absolute;
+      top: 10px;
+      left: 130px;
+      background: #fff;
+      color: #000;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 0 10px #00ffff;
+      white-space: nowrap;
+      animation: fadeInOut 46s forwards;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: scale(0.9); }
+      5% { opacity: 1; transform: scale(1); }
+      95% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Menu 3 gạch -->
+<div id="menuToggle" style="position: fixed; top: 20px; right: 20px; z-index: 10000; cursor: pointer;">
+  <div style="width: 30px; height: 4px; background: white; margin: 6px 0;"></div>
+  <div style="width: 30px; height: 4px; background: white; margin: 6px 0;"></div>
+  <div style="width: 30px; height: 4px; background: white; margin: 6px 0;"></div>
+</div>
+
+<!-- Menu -->
+<div id="menuBox" style="display:none; position: fixed; top: 60px; right: 20px; background: #222; color: white; padding: 10px 15px; border-radius: 10px; box-shadow: 0 0 10px #000; z-index: 10001;">
+  <button onclick="showCheckKeyForm()" style="background: #7209b7; border: none; padding: 10px 15px; color: white; border-radius: 8px; cursor: pointer;">Check Key</button>
+  <button id="backToKeyBtn" onclick="showKeyForm()" style="display:none; background: #555; border: none; padding: 10px 15px; color: white; border-radius: 8px; cursor: pointer; margin-top: 10px;">Trở về</button>
+</div>
+
+<!-- Form Key -->
+<div class="card-container" id="keyForm">
+  <div class="card">
+    <h2>TOOL ROBOT AI 5.0 FanKy</h2>
+    <input type="text" id="keyInput" placeholder="Nhập Key của bạn..." autocomplete="off" />
+    <button onclick="submitKey()">Xâm Nhập</button>
+    <div id="msg" class="msg"></div>
+  </div>
+</div>
+
+<!-- Form Check Key -->
+<div class="card-container" id="checkKeyForm" style="display:none;">
+  <div class="card">
+    <h2>Check Key Của Bạn</h2>
+    <input type="text" id="checkKeyInput" placeholder="Nhập Key cần kiểm tra..." autocomplete="off" />
+    <button onclick="checkKeyInfo()">Check</button>
+    <div id="checkKeyResult" class="msg" style="white-space: pre-line;"></div>
+  </div>
+</div>
+
+<!-- Robot -->
+<div class="robot-container" id="robot">
+  <img src="https://iqai.com/_next/image?url=/gifs/home/robotics.gif&w=828&q=75" class="robot-img" alt="robot" />
+</div>
+
+<!-- Game Frame -->
+<iframe src="https://web.sun.win" allow="autoplay; encrypted-media" id="gameFrame"></iframe>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBMGLXd9HKgKWp4k34TEAKbYGvxfbD9cUo",
+    authDomain: "kanhaodata.firebaseapp.com",
+    databaseURL: "https://kanhaodata-default-rtdb.firebaseio.com",
+    projectId: "kanhaodata",
+    storageBucket: "kanhaodata.appspot.com",
+    messagingSenderId: "820084045633",
+    appId: "1:820084045633:web:e261a3ead69ea1ea6253c0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
+
+<script>
+  const deviceId = localStorage.getItem("device_id") || (() => {
+    const id = "dev-" + Math.random().toString(36).substr(2, 10);
+    localStorage.setItem("device_id", id);
+    return id;
+  })();
+
+  function submitKey() {
+    const key = document.getElementById("keyInput").value.trim();
+    const msg = document.getElementById("msg");
+
+    if (!key) {
+      msg.textContent = "❗ Bạn chưa nhập key";
+      return;
+    }
+
+    msg.textContent = "Đang kiểm tra...";
+
+    db.ref("keys/" + key).once("value").then(snap => {
+      if (!snap.exists()) {
+        msg.textContent = "❌ Key không tồn tại";
+        return;
+      }
+
+      const data = snap.val();
+      const now = Date.now();
+
+      if (data.expiresAt !== "forever" && now > data.expiresAt) {
+        msg.textContent = "❌ Key đã hết hạn";
+        return;
+      }
+
+      const usedDevices = data.devices ? Object.keys(data.devices).length : 0;
+      const maxDevices = data.maxDevices || 1;
+
+      if (usedDevices >= maxDevices && !data.devices?.[deviceId]) {
+        msg.textContent = "⚠️ Key đã vượt giới hạn thiết bị";
+        return;
+      }
+
+      db.ref("keys/" + key + "/devices/" + deviceId).set({
+        usedAt: now,
+        ua: navigator.userAgent
+      });
+
+      document.getElementById("keyForm").style.display = "none";
+      document.getElementById("menuToggle").style.display = "none";
+      document.getElementById("menuBox").style.display = "none";
+      document.getElementById("gameFrame").style.display = "block";
+      startTool();
+    });
+  }
+
+  function showCheckKeyForm() {
+    document.getElementById("keyForm").style.display = "none";
+    document.getElementById("checkKeyForm").style.display = "block";
+    document.getElementById("menuBox").style.display = "none";
+    document.getElementById("backToKeyBtn").style.display = "block";
+  }
+
+  function showKeyForm() {
+    document.getElementById("keyForm").style.display = "block";
+    document.getElementById("checkKeyForm").style.display = "none";
+    document.getElementById("menuBox").style.display = "none";
+    document.getElementById("backToKeyBtn").style.display = "none";
+  }
+
+  function checkKeyInfo() {
+    const key = document.getElementById("checkKeyInput").value.trim();
+    const resultEl = document.getElementById("checkKeyResult");
+    resultEl.textContent = "Đang kiểm tra...";
+
+    db.ref("keys/" + key).once("value").then(snap => {
+      if (!snap.exists()) {
+        resultEl.textContent = "❌ Key không tồn tại";
+        return;
+      }
+
+      const data = snap.val();
+      const expired = data.expiresAt === "forever"
+        ? "Vĩnh viễn"
+        : new Date(data.expiresAt).toLocaleString("vi-VN");
+      const deviceCount = data.devices ? Object.keys(data.devices).length : 0;
+      const maxDevices = data.maxDevices || 1;
+
+      resultEl.textContent = 
+        `🔑 Key: ${key}
+📅 Hạn sử dụng: ${expired}
+📱 Thiết bị đã dùng: ${deviceCount}
+📈 Giới hạn thiết bị: ${maxDevices}`;
+    });
+  }
+
+  document.getElementById("menuToggle").onclick = () => {
+    const menu = document.getElementById("menuBox");
+    menu.style.display = menu.style.display === "none" ? "block" : "none";
+  };
+
+  function startTool() {
+    if (window.toolStarted) return;
+    window.toolStarted = true;
+
+    dragElement(document.getElementById("robot"));
+
+    let lastId = null;
+    let history = [];
+
+    setInterval(() => {
+      fetch("https://sunwin-taixiu.onrender.com/taixiu")
+        .then(res => res.json())
+        .then(data => {
+          const currentId = data.id_phien;
+          if (currentId !== lastId) {
+            lastId = currentId;
+            history = data.pattern.split("").map(c => c === "T" ? "Tài" : "Xỉu");
+            const result = predictNext(history);
+            setTimeout(() => {
+              showSpeech(parseInt(currentId) + 1, result);
+            }, 19000);
+          }
+        })
+        .catch(() => {
+          showSpeech("???", { prediction: "Không thể tải dữ liệu", confidence: 0 });
+        });
+    }, 2000);
+  }
+
+  function predictNext(history) {
+    let prediction = "Tài";
+    let confidence = 50;
+
+    if (history.length < 4) {
+      prediction = history.at(-1) || "Tài";
+      confidence = 55 + Math.floor(Math.random() * 10);
+    } else {
+      const last = history.at(-1);
+
+      if (history.slice(-4).every(k => k === last)) {
+        prediction = last;
+        confidence = 95 + Math.floor(Math.random() * 5);
+      } else if (
+        history.at(-1) === history.at(-2) &&
+        history.at(-3) === history.at(-4) &&
+        history.at(-1) !== history.at(-3)
+      ) {
+        prediction = last === "Tài" ? "Xỉu" : "Tài";
+        confidence = 85 + Math.floor(Math.random() * 5);
+      } else if (new Set(history.slice(-3)).size === 3) {
+        prediction = Math.random() < 0.5 ? "Tài" : "Xỉu";
+        confidence = 50 + Math.floor(Math.random() * 10);
+      } else {
+        const count = history.reduce((acc, val) => {
+          acc[val] = (acc[val] || 0) + 1;
+          return acc;
+        }, {});
+        prediction = (count["Tài"] || 0) > (count["Xỉu"] || 0) ? "Xỉu" : "Tài";
+        confidence = 70 + Math.floor(Math.random() * 10);
+      }
+    }
+
+    return { prediction, confidence };
+  }
+
+  function showSpeech(phien, resultObj) {
+    const { prediction, confidence } = resultObj;
+    const robot = document.getElementById("robot");
+    const old = document.querySelector(".speech-bubble");
+    if (old) old.remove();
+
+    const bubble = document.createElement("div");
+    bubble.className = "speech-bubble";
+    bubble.innerHTML = `#${phien} : ${prediction}<br>Độ tin cậy : ${confidence}%`;
+    robot.appendChild(bubble);
+
+    setTimeout(() => bubble.remove(), 47000);
+  }
+
+  function dragElement(elmnt) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    elmnt.onmousedown = dragMouseDown;
+    elmnt.ontouchstart = dragTouchStart;
+
+    function dragMouseDown(e) {
+      e.preventDefault();
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      document.onmousemove = elementDrag;
+    }
+
+    function dragTouchStart(e) {
+      pos3 = e.touches[0].clientX;
+      pos4 = e.touches[0].clientY;
+      document.ontouchend = closeDragElement;
+      document.ontouchmove = elementTouchDrag;
+    }
+
+    function elementDrag(e) {
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+
+    function elementTouchDrag(e) {
+      pos1 = pos3 - e.touches[0].clientX;
+      pos2 = pos4 - e.touches[0].clientY;
+      pos3 = e.touches[0].clientX;
+      pos4 = e.touches[0].clientY;
+      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+      document.onmouseup = null;
+      document.onmousemove = null;
+      document.ontouchend = null;
+      document.ontouchmove = null;
+    }
+  }
+
+  // Lời chào ban đầu
+  const demoSpeech = document.createElement("div");
+  demoSpeech.className = "speech-bubble";
+  demoSpeech.innerText = "Bạn cần nhập key để sử dụng tôi";
+  document.getElementById("robot").appendChild(demoSpeech);
+  setTimeout(() => demoSpeech.remove(), 12000);
+</script>
+
+</body>
+</html>
