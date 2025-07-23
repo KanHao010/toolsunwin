@@ -2,253 +2,128 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dự đoán Tài Xỉu - FanKy</title>
+  <title>SunWin Dự Đoán</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #1f1c2c, #928dab);
-      color: #fff;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #000;
       overflow: hidden;
     }
 
-    .overlay {
+    iframe {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+    }
+
+    #menuContainer {
       position: fixed;
-      top: 100px;
-      left: 100px;
-      width: 300px;
-      background: rgba(33, 33, 55, 0.95);
-      border: 2px solid #7f00ff;
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 20px 24px;
       border-radius: 16px;
-      padding: 12px;
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
       z-index: 9999;
       cursor: move;
-      user-select: none;
+      font-size: 20px;
+      font-weight: bold;
+      white-space: nowrap;
       touch-action: none;
     }
 
-    .title {
-      text-align: center;
-      font-size: 20px;
+    #title {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
       font-weight: bold;
-      margin-bottom: 10px;
-      text-shadow: 0 0 8px #7f00ff;
+      color: #ff00cc;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px 20px;
+      border-radius: 12px;
+      z-index: 10000;
+      box-shadow: 0 0 10px #ff00cc;
     }
-
-    .result-circle {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      background: #000;
-      color: #fff;
-      border: 4px solid #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      font-weight: bold;
-      margin: 10px auto;
-      box-shadow: 0 0 20px 5px #7f00ff;
-    }
-
-    .section {
-      margin-bottom: 12px;
-    }
-
-    .cau {
-      font-size: 14px;
-      margin-top: 6px;
-    }
-
-    .btn-history {
-      display: block;
-      width: 100%;
-      padding: 6px;
-      background: #fff;
-      color: #7f00ff;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    .history-box {
-      display: none;
-      max-height: 300px;
-      overflow-y: auto;
-      margin-top: 10px;
-      border-top: 1px solid #999;
-      padding-top: 8px;
-    }
-
-    .history-entry {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-
-    .win { color: #00FFAB; font-weight: bold; }
-    .lose { color: #FF4F70; font-weight: bold; }
   </style>
 </head>
 <body>
+  <iframe src="https://web.sunwin.us/"></iframe>
 
-<iframe src="https://web.sun.win"
-        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 0;"
-        allow="autoplay; encrypted-media">
-</iframe>
+  <div id="title">𝐓𝐨𝐨𝐥 𝐅𝐚𝐧𝐊𝐲 𝟖.𝟎</div>
 
-<div class="overlay" id="draggable">
-  <div class="title">Tool SunWin FanKy</div>
-
-  <div class="section">
-    <div><strong>Phiên dự đoán:</strong><br><span id="nextPhien">#????</span></div>
+  <div id="menuContainer">
+    <div id="line1">Đang tải...</div>
+    <div id="line2"></div>
   </div>
 
-  <div class="result-circle" id="predictionCircle">...</div>
+  <script>
+    const menu = document.getElementById("menuContainer");
+    const line1 = document.getElementById("line1");
+    const line2 = document.getElementById("line2");
 
-  <div class="section cau">
-    <strong>Cầu:</strong> <span id="cauText">...</span>
-  </div>
+    // Kéo bằng chuột
+    let isDragging = false;
+    let offsetX, offsetY;
 
-  <button class="btn-history" onclick="toggleHistory()">LỊCH SỬ</button>
-
-  <div class="history-box" id="historyLog"></div>
-</div>
-
-<script>
-  let lastId = null;
-  let predictionHistory = [];
-
-  function predictNext(history) {
-    if (history.length < 4) return history.at(-1) || "Tài";
-    const last = history.at(-1);
-    if (history.slice(-4).every(k => k === last)) return last;
-    if (
-      history.length >= 4 &&
-      history.at(-1) === history.at(-2) &&
-      history.at(-3) === history.at(-4) &&
-      history.at(-1) !== history.at(-3)
-    ) return last === "Tài" ? "Xỉu" : "Tài";
-    const last4 = history.slice(-4);
-    if (last4[0] !== last4[1] && last4[1] === last4[2] && last4[2] !== last4[3])
-      return last === "Tài" ? "Xỉu" : "Tài";
-    const pattern = history.slice(-6, -3).toString();
-    const latest = history.slice(-3).toString();
-    if (pattern === latest) return history.at(-1);
-    if (new Set(history.slice(-3)).size === 3) return Math.random() < 0.5 ? "Tài" : "Xỉu";
-    const count = history.reduce((acc, val) => {
-      acc[val] = (acc[val] || 0) + 1;
-      return acc;
-    }, {});
-    return (count["Tài"] || 0) > (count["Xỉu"] || 0) ? "Xỉu" : "Tài";
-  }
-
-  function updateDisplay(data) {
-    const currentId = data.id_phien;
-    const patternArr = data.pattern.split("").map(c => c === "T" ? "Tài" : "Xỉu");
-    const lastResult = patternArr.at(-1);
-    const prediction = predictNext(patternArr);
-    const cauString = data.pattern.slice(-10).toLowerCase();
-
-    if (lastId !== currentId) {
-      const lastIdNum = parseInt(currentId);
-      const nextId = lastIdNum + 1;
-
-      document.getElementById("nextPhien").textContent = `#${nextId}`;
-      document.getElementById("predictionCircle").textContent = prediction;
-      document.getElementById("cauText").textContent = cauString;
-
-      const prev = predictionHistory.find(e => e.id === lastIdNum);
-      if (prev) {
-        prev.thucte = lastResult;
-        prev.status = prev.pred === lastResult ? "win" : "lose";
-        appendToHistory(prev);
+    menu.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      offsetX = e.clientX - menu.offsetLeft;
+      offsetY = e.clientY - menu.offsetTop;
+    });
+    document.addEventListener("mousemove", (e) => {
+      if (isDragging) {
+        menu.style.left = (e.clientX - offsetX) + "px";
+        menu.style.top = (e.clientY - offsetY) + "px";
       }
+    });
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
 
-      predictionHistory.push({ id: nextId, pred: prediction });
-      lastId = currentId;
-    }
-  }
+    // Kéo bằng cảm ứng
+    menu.addEventListener("touchstart", (e) => {
+      isDragging = true;
+      const touch = e.touches[0];
+      offsetX = touch.clientX - menu.offsetLeft;
+      offsetY = touch.clientY - menu.offsetTop;
+    });
+    document.addEventListener("touchmove", (e) => {
+      if (isDragging) {
+        const touch = e.touches[0];
+        menu.style.left = (touch.clientX - offsetX) + "px";
+        menu.style.top = (touch.clientY - offsetY) + "px";
+      }
+    });
+    document.addEventListener("touchend", () => {
+      isDragging = false;
+    });
 
-  function appendToHistory(entry) {
-    const div = document.createElement("div");
-    div.className = "history-entry";
-    div.innerHTML = `
-      <span>#${entry.id}</span>
-      <span>${entry.thucte || "-"}</span>
-      <span>${entry.pred}</span>
-      <span class="${entry.status || ""}">${entry.status === "win" ? "Thắng" : entry.status === "lose" ? "Thua" : ""}</span>
-    `;
-    document.getElementById("historyLog").prepend(div);
-  }
+    // Lấy dữ liệu từ API
+    async function fetchData() {
+      try {
+        const res = await fetch("https://saolo-binhtool.onrender.com/api/taixiu/sunwin");
+        const data = await res.json();
 
-  function toggleHistory() {
-    const box = document.getElementById("historyLog");
-    box.style.display = box.style.display === "block" ? "none" : "block";
-  }
+        const nextSession = data.next_session || "??";
+        const prediction = data.prediction || "??";
 
-  function fetchData() {
-    fetch("https://sunwin-taixiu.onrender.com/taixiu")
-      .then(res => res.json())
-      .then(data => updateDisplay(data))
-      .catch(err => console.error("Lỗi API:", err));
-  }
-
-  setInterval(fetchData, 2000);
-  fetchData();
-
-  dragElement(document.getElementById("draggable"));
-  function dragElement(elmnt) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    elmnt.onmousedown = dragMouseDown;
-    elmnt.ontouchstart = dragTouchStart;
-
-    function dragMouseDown(e) {
-      e.preventDefault();
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      document.onmouseup = closeDragElement;
-      document.onmousemove = elementDrag;
+        line1.textContent = `Phiên : #${nextSession}`;
+        line2.textContent = `Dự Đoán : ${prediction}`;
+      } catch (error) {
+        line1.textContent = "❌ Lỗi kết nối API";
+        line2.textContent = "";
+      }
     }
 
-    function dragTouchStart(e) {
-      pos3 = e.touches[0].clientX;
-      pos4 = e.touches[0].clientY;
-      document.ontouchend = closeDragElement;
-      document.ontouchmove = elementTouchDrag;
-    }
-
-    function elementDrag(e) {
-      e.preventDefault();
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-    }
-
-    function elementTouchDrag(e) {
-      pos1 = pos3 - e.touches[0].clientX;
-      pos2 = pos4 - e.touches[0].clientY;
-      pos3 = e.touches[0].clientX;
-      pos4 = e.touches[0].clientY;
-      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-    }
-
-    function closeDragElement() {
-      document.onmouseup = null;
-      document.onmousemove = null;
-      document.ontouchend = null;
-      document.ontouchmove = null;
-    }
-  }
-</script>
-
+    fetchData();
+    setInterval(fetchData, 5000);
+  </script>
 </body>
 </html>
